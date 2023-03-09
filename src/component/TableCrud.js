@@ -7,8 +7,21 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { UserListContext } from "../pages/Dashboard";
 
 export const TableCrud = () => {
-  const { userList, setUserList } = useContext(UserListContext);
-  const GET_ALL = "/all";
+  const {
+    setId,
+    userList,
+    setUserList,
+    setUsername,
+    refUsername,
+    setPassword,
+    refPassword,
+    setEmail,
+    refEmail,
+    setDate,
+    refDate,
+  } = useContext(UserListContext);
+
+  const GET_ALL = "all";
 
   const handleDelete = async (id) => {
     try {
@@ -20,6 +33,20 @@ export const TableCrud = () => {
     } catch (error) {
       console.log(`Error: ${error.message}`);
     }
+  };
+
+  const handleEdit = (id) => {
+    pgAxios.get(`${id}`).then((res) => {
+      setUsername(res.data.username);
+      refUsername.current.value = res.data.username;
+      setEmail(res.data.email);
+      refEmail.current.value = res.data.email;
+      setPassword(res.data.password);
+      refPassword.current.value = res.data.password;
+      setDate(res.data.dataNascita);
+      refDate.current.value = res.data.dataNascita;
+      setId(id);
+    });
   };
 
   const userColumns = [
@@ -55,7 +82,14 @@ export const TableCrud = () => {
       renderCell: (params) => {
         return (
           <div className="cellAction" style={{ display: "flex" }}>
-            <IconButton variant="outlined" size="small" className="viewButton">
+            <IconButton
+              variant="outlined"
+              size="small"
+              className="viewButton"
+              onClick={(e) => {
+                handleEdit(params.id);
+              }}
+            >
               <EditIcon className="icon" />
             </IconButton>
             <div className="deleteButton">

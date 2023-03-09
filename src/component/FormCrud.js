@@ -1,5 +1,5 @@
 import Button from "react-bootstrap/Button";
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useState } from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
 import pgAxios from "../api/pgAxios";
@@ -8,16 +8,30 @@ import { BeatLoader } from "react-spinners";
 import { UserListContext } from "../pages/Dashboard";
 
 export const FormCrud = () => {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [date, setDate] = useState("");
+  const {
+    setId,
+    id,
+    setUserList,
+    username,
+    setUsername,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    date,
+    setDate,
+    refUsername,
+    refEmail,
+    refPassword,
+    refDate,
+  } = useContext(UserListContext);
+
   const [errMsg, setErrMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   const POST_URL = "add";
-  const GET_ALL = "/all";
-  const { setUserList } = useContext(UserListContext);
+  const GET_ALL = "all";
+  const PUT_BY_ID = "edit";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,45 +39,70 @@ export const FormCrud = () => {
     refDate.current.value = "";
     refEmail.current.value = "";
     refUsername.current.value = "";
-    try {
-      setLoading(true);
-      await pgAxios
-        .post(
-          POST_URL,
-          JSON.stringify({ username, email, password, dataNascita: date }),
-          {
-            headers: { "Content-Type": "application/json" },
-          }
-        )
-        .then(setLoading(false))
-        .then(() => pgAxios.get(GET_ALL).then((res) => setUserList(res.data)));
-      setUsername("");
-      setEmail("");
-      setPassword("");
-      setDate("");
-    } catch (error) {
-      setLoading(false);
-      console.log(error);
-      if (!error?.response) {
-        setErrMsg("No Server response");
-      } else if (error.response?.status === 400) {
-        setErrMsg("Missing required data");
-      } else if (error.response?.status === 401) {
-        setErrMsg("Unauthorized");
-      } else {
-        setErrMsg("Edit failed");
+    console.log(id, username, password, date, email);
+    if (id !== 0) {
+      try {
+        console.log(id);
+        setLoading(true);
+        await pgAxios
+          .put(
+            PUT_BY_ID,
+            JSON.stringify({
+              id,
+              username,
+              email,
+              password,
+              dataNascita: date,
+            }),
+            {
+              headers: { "Content-Type": "application/json" },
+            }
+          )
+          .then(setLoading(false))
+          .then(() =>
+            pgAxios.get(GET_ALL).then((res) => setUserList(res.data))
+          );
+        setUsername("");
+        setEmail("");
+        setPassword("");
+        setDate("");
+        setId(0);
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      try {
+        setLoading(true);
+        await pgAxios
+          .post(
+            POST_URL,
+            JSON.stringify({ username, email, password, dataNascita: date }),
+            {
+              headers: { "Content-Type": "application/json" },
+            }
+          )
+          .then(setLoading(false))
+          .then(() =>
+            pgAxios.get(GET_ALL).then((res) => setUserList(res.data))
+          );
+        setUsername("");
+        setEmail("");
+        setPassword("");
+        setDate("");
+      } catch (error) {
+        setLoading(false);
+        console.log(error);
+        if (!error?.response) {
+          setErrMsg("No Server response");
+        } else if (error.response?.status === 400) {
+          setErrMsg("Missing required data");
+        } else if (error.response?.status === 401) {
+          setErrMsg("Unauthorized");
+        } else {
+          setErrMsg("Edit failed");
+        }
       }
     }
-  };
-
-  const refUsername = useRef("");
-  const refPassword = useRef("");
-  const refEmail = useRef("");
-  const refDate = useRef("");
-
-  const handleClick = () => {
-    refUsername.current.value = "";
-    console.log(refUsername);
   };
 
   return (
@@ -91,10 +130,10 @@ export const FormCrud = () => {
             />
           </Col>
           <Col>
-            <Form.Label htmlFor="inputPassword5">Password</Form.Label>
+            <Form.Label htmlFor="inputPassword">Password</Form.Label>
             <Form.Control
               type="password"
-              id="inputPassword5"
+              id="inputPassword"
               ref={refPassword}
               aria-describedby="passwordHelpBlock"
               onChange={(e) => {
@@ -145,9 +184,6 @@ export const FormCrud = () => {
           </Button>
         </Row>
       </Form>
-      <Button variant="warning" onClick={handleClick}>
-        clear
-      </Button>
     </Container>
   );
 };
